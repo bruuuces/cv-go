@@ -3,15 +3,27 @@ package main
 import (
 	"fmt"
 	"github.com/939999807/cv-go/statusbar"
+	"github.com/hybridgroup/mjpeg"
 	"gocv.io/x/gocv"
 	"image"
 	"image/color"
+	"log"
+	"net/http"
+)
+
+var (
+	err             error
+	window          *gocv.Window
+	webcam          *gocv.VideoCapture
+	stream          *mjpeg.Stream
+	statusBarDrawer *statusbar.BarDrawer
+	classifier      gocv.CascadeClassifier
 )
 
 func main() {
 
 	// open webcam
-	webcam, err := gocv.VideoCaptureDevice(0)
+	webcam, err = gocv.VideoCaptureDevice(0)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -22,18 +34,14 @@ func main() {
 	webcam.Set(gocv.VideoCaptureFrameHeight, 480)
 
 	// open display window
-	window := gocv.NewWindow("Face Detect")
+	window = gocv.NewWindow("Face Detect")
 	defer window.Close()
 
-	// prepare image matrix
-	img := gocv.NewMat()
-	defer img.Close()
-
-	// color for the rect when faces detected
-	blue := color.RGBA{0, 0, 255, 0}
+	// create the mjpeg stream
+	stream = mjpeg.NewStream()
 
 	// load classifier to recognize faces
-	classifier := gocv.NewCascadeClassifier()
+	classifier = gocv.NewCascadeClassifier()
 	defer classifier.Close()
 
 	if !classifier.Load("conf/haarcascade_frontalface_default.xml") {
@@ -45,9 +53,23 @@ func main() {
 
 	signalIconDrawer := statusbar.NewSignalIconDrawer(16, 4)
 	clockIconDrawer := statusbar.NewClockIconDrawer(72.0, 12.5)
-	statusBarDrawer := statusbar.NewBarDrawer(20, []int{4, 8}, signalIconDrawer, clockIconDrawer)
+	statusBarDrawer = statusbar.NewBarDrawer(20, []int{4, 8}, signalIconDrawer, clockIconDrawer)
+
+	// start capturing
+	go capture()
+
+	http.Handle("/", stream)
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", nil))
+
+}
+
+func capture() {
+	// prepare image matrix
+	img := gocv.NewMat()
+	defer img.Close()
 
 	for {
+
 		if ok := webcam.Read(&img); !ok {
 			fmt.Printf("cannot read device %d\n", 0)
 			return
@@ -68,7 +90,8 @@ func main() {
 
 		for _, r := range rects {
 
-			//gocv.DrawArc(&Img, Arc, StartPoint, EndPoint, 2);
+			// color for the rect when faces detected
+			blue := color.RGBA{0, 0, 255, 0}
 
 			gocv.Rectangle(&img, r, blue, 3)
 
@@ -79,9 +102,11 @@ func main() {
 
 		// show the image in the window, and wait 1 millisecond
 
-		window.IMShow(img)
-		if window.WaitKey(1) >= 0 {
-			break
-		}
+		buf, _ := gocv.IMEncode(".jpg", img)
+		stream.UpdateJPEG(buf)
+		//window.IMShow(img)
+		//if window.WaitKey(1) >= 0 {
+		//	break
+		//}
 	}
 }

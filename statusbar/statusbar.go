@@ -101,6 +101,9 @@ func (d *BarDrawer) Refresh(img *gocv.Mat) {
 		rowPos += drawer.Draw(&iconImg, fgColor, fgShadingColor, bgColor)
 		rowPos += d.statusBarPadding[1]
 	}
+	if d.img != nil {
+		defer d.img.Close()
+	}
 	d.img = &statusBarImg
 	d.init = true
 }
