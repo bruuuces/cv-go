@@ -44,14 +44,14 @@ func (d *BarDrawer) CheckRefresh(img *gocv.Mat) bool {
 }
 
 func (d *BarDrawer) RefreshTheme(img *gocv.Mat) bool {
-	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR);
-	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA);
+	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR)
+	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA)
 	img.ConvertTo(img, gocv.MatTypeCV8UC4)
 
 	roiImg := img.Region(image.Rect(0, 0, img.Cols(), d.statusBarHeight))
-	gocv.CvtColor(roiImg, &roiImg, gocv.ColorBGRToGray);
+	gocv.CvtColor(roiImg, &roiImg, gocv.ColorBGRToGray)
 	gocv.Threshold(roiImg, &roiImg, 128, 255, gocv.ThresholdBinary)
-	numOfBlack := 0;
+	numOfBlack := 0
 	for i := 0; i < roiImg.Rows(); i++ {
 		for j := 0; j < roiImg.Cols(); j++ { //遍历图片的每一个像素点
 			c := roiImg.GetUCharAt(i, j)
@@ -72,8 +72,8 @@ func (d *BarDrawer) Refresh(img *gocv.Mat) {
 	if !d.CheckRefresh(img) {
 		return
 	}
-	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR);
-	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA);
+	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR)
+	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA)
 	img.ConvertTo(img, gocv.MatTypeCV8UC4)
 
 	var fgColor color.RGBA
@@ -109,8 +109,8 @@ func (d *BarDrawer) Refresh(img *gocv.Mat) {
 }
 
 func (d *BarDrawer) Draw(img *gocv.Mat) {
-	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR);
-	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA);
+	gocv.CvtColor(*img, img, gocv.ColorRGBAToBGR)
+	gocv.CvtColor(*img, img, gocv.ColorBGRToRGBA)
 	gocv.Vconcat(*d.img, *img, img)
 }
 
@@ -205,7 +205,7 @@ func (d *ClockIconDrawer) Draw(img *gocv.Mat, fgColor color.RGBA, fgShadingColor
 	c.SetSrc(image.NewUniform(fgColor))
 
 	rgba := image.NewRGBA(image.Rect(0, 0, width, int(math.Floor(d.fontSize))))
-	draw.Draw(rgba, rgba.Bounds(), image.NewUniform(bgColor), image.ZP, draw.Src)
+	draw.Draw(rgba, rgba.Bounds(), image.NewUniform(bgColor), image.Point{}, draw.Src)
 	c.SetClip(rgba.Bounds())
 	c.SetDst(rgba)
 	c.SetHinting(font.HintingFull)
